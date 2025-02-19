@@ -70,4 +70,4 @@ A DIY Steam Sauna tracking system that monitors temperature, humidity, heart rat
 
 ## License
 
-MIT License
+GNU GENERAL PUBLIC LICENSE
