@@ -1,0 +1,104 @@
+/* Reset */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* Global Styles */
+body {
+  background-color: #0a0a0a;
+  color: #00ffea;
+  font-family: 'Share Tech Mono', monospace;
+  padding: 20px;
+}
+
+header, footer {
+  text-align: center;
+  margin: 20px 0;
+}
+
+header h1 {
+  font-family: 'VT323', monospace;
+  font-size: 2.5em;
+  color: #ff00c8;
+  text-shadow: 0 0 5px #ff00c8;
+}
+
+/* Card Styles */
+.card {
+  background: rgba(20, 20, 20, 0.8);
+  border: 1px solid #00ffea;
+  border-radius: 10px;
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 0 15px rgba(0, 255, 234, 0.5);
+}
+
+h2 {
+  font-family: 'VT323', monospace;
+  font-size: 1.8em;
+  margin-bottom: 15px;
+  color: #ff00c8;
+  text-shadow: 0 0 5px #ff00c8;
+}
+
+/* Tables */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+}
+
+th, td {
+  border: 1px solid #00ffea;
+  padding: 10px;
+  text-align: center;
+}
+
+th {
+  background-color: rgba(0, 255, 234, 0.2);
+  color: #ff00c8;
+}
+
+tr:hover {
+  background-color: rgba(0, 255, 234, 0.1);
+}
+
+/* Chart Container */
+.chart-container {
+  width: 100%;
+  max-width: 600px;
+  margin: 20px auto;
+  background: #0a0a0a;
+  padding: 10px;
+  border: 1px solid #00ffea;
+  border-radius: 10px;
+}
+
+/* Buttons */
+.control-btn {
+  background: transparent;
+  border: 2px solid #00ffea;
+  color: #00ffea;
+  padding: 10px 15px;
+  border-radius: 5px;
+  font-family: 'Share Tech Mono', monospace;
+  cursor: pointer;
+  transition: background 0.3s ease, color 0.3s ease;
+  margin: 10px 0;
+}
+
+.control-btn:hover {
+  background: #00ffea;
+  color: #0a0a0a;
+}
+
+a.control-btn {
+  text-decoration: none;
+}
+
+/* Footer Link */
+footer a {
+  font-size: 1em;
+}

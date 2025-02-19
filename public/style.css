@@ -1,0 +1,192 @@
+/* Reset and Box Sizing */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* Global Settings */
+body {
+  background-color: #0a0a0a;
+  color: #00ffea;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 16px;
+  line-height: 1.4;
+  padding: 20px;
+}
+
+/* Header */
+header {
+  text-align: center;
+  margin-bottom: 20px;
+}
+header h1 {
+  font-family: 'VT323', monospace;
+  font-size: 3em;
+  color: #ff00c8;
+  /* Reduced blur from 10px to 5px */
+  text-shadow: 0 0 5px #ff00c8;
+}
+
+/* Card Component */
+.card {
+  background: rgba(20, 20, 20, 0.8);
+  border: 1px solid #00ffea;
+  border-radius: 10px;
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 0 15px rgba(0, 255, 234, 0.5);
+}
+.card h2 {
+  font-family: 'VT323', monospace;
+  font-size: 2em;
+  margin-bottom: 15px;
+  color: #ff00c8;
+  /* Reduced blur from 10px to 5px */
+  text-shadow: 0 0 5px #ff00c8;
+}
+
+/* Sensor Grid */
+.sensor-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  gap: 15px;
+}
+.sensor-item {
+  text-align: center;
+}
+.sensor-label {
+  display: block;
+  font-size: 0.9em;
+  color: #00ffea;
+  margin-bottom: 5px;
+}
+.sensor-value {
+  font-size: 1.6em;
+  font-weight: bold;
+  color: #fffc00;
+  /* Reduced blur from 5px to 3px */
+  text-shadow: 0 0 3px #fffc00;
+}
+
+/* Controls Grid */
+.controls-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 15px;
+}
+.control-btn {
+  background: transparent;
+  border: 2px solid #00ffea;
+  color: #00ffea;
+  padding: 12px;
+  border-radius: 5px;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 1em;
+  cursor: pointer;
+  transition: background 0.3s ease, color 0.3s ease;
+}
+.control-btn:hover {
+  background: #00ffea;
+  color: #0a0a0a;
+}
+
+/* Heater Control */
+.heater-control {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+.heater-control input[type="number"] {
+  flex: 1;
+  padding: 10px;
+  background: #111;
+  border: 2px solid #00ffea;
+  color: #00ffea;
+  font-family: 'Share Tech Mono', monospace;
+  border-radius: 5px;
+}
+.heater-control button {
+  background: transparent;
+  border: 2px solid #00ffea;
+  color: #00ffea;
+  padding: 10px 15px;
+  border-radius: 5px;
+  font-family: 'Share Tech Mono', monospace;
+  cursor: pointer;
+  transition: background 0.3s ease, color 0.3s ease;
+}
+.heater-control button:hover {
+  background: #00ffea;
+  color: #0a0a0a;
+}
+
+/* Session Control */
+.session-control {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-bottom: 10px;
+}
+.session-control button {
+  background: transparent;
+  border: 2px solid #00ffea;
+  color: #00ffea;
+  padding: 12px;
+  border-radius: 5px;
+  font-family: 'Share Tech Mono', monospace;
+  cursor: pointer;
+  transition: background 0.3s ease, color 0.3s ease;
+}
+.session-control button:hover {
+  background: #00ffea;
+  color: #0a0a0a;
+}
+.session-control button:disabled {
+  border-color: #555;
+  color: #555;
+  cursor: not-allowed;
+}
+
+/* Device List */
+.device-list {
+  margin-top: 15px;
+}
+.device-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(20, 20, 20, 0.8);
+  padding: 10px;
+  border: 1px solid #00ffea;
+  border-radius: 5px;
+  margin-bottom: 10px;
+  box-shadow: 0 0 10px rgba(0, 255, 234, 0.3);
+}
+.device-item span {
+  font-family: 'Share Tech Mono', monospace;
+  color: #fffc00;
+}
+.device-item button {
+  background: transparent;
+  border: 2px solid #39ff14;
+  color: #39ff14;
+  padding: 8px 12px;
+  border-radius: 5px;
+  font-family: 'Share Tech Mono', monospace;
+  cursor: pointer;
+  transition: background 0.3s ease, color 0.3s ease;
+}
+.device-item button:hover {
+  background: #39ff14;
+  color: #0a0a0a;
+}
+
+/* Footer */
+footer {
+  text-align: center;
+  margin-top: 20px;
+  font-family: 'Share Tech Mono', monospace;
+  color: #00ffea;
+}

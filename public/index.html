@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Quantified Steam</title>
+  <!-- Google Fonts for a retro, cyberpunk look -->
+  <link href="https://fonts.googleapis.com/css2?family=VT323&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <h1>QUANTIFIED STEAM</h1>
+  </header>
+  <main>
+    <!-- Sensor Readings Card -->
+    <section id="sensor-card" class="card">
+      <h2>SENSOR READINGS</h2>
+      <div class="sensor-grid">
+        <div class="sensor-item">
+          <span class="sensor-label">Temperature</span>
+          <span id="temperature" class="sensor-value">-- °C</span>
+        </div>
+        <div class="sensor-item">
+          <span class="sensor-label">Humidity</span>
+          <span id="humidity" class="sensor-value">-- %</span>
+        </div>
+        <div class="sensor-item">
+          <span class="sensor-label">Heart Rate</span>
+          <span id="heartRate" class="sensor-value">--</span>
+        </div>
+        <div class="sensor-item">
+          <span class="sensor-label">Heater</span>
+          <span id="heaterSetting" class="sensor-value">--</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Controls Card -->
+    <section id="controls-card" class="card">
+      <h2>CONTROLS</h2>
+      <div class="controls-grid">
+        <button id="toggleLocation" class="control-btn">Enter Sauna</button>
+        <button id="toggleDoor" class="control-btn">Open Doors</button>
+        <button id="togglePosition" class="control-btn">Sitting</button>
+      </div>
+      <div class="heater-control">
+        <input type="number" id="heaterInput" min="0" max="16" placeholder="0–16" />
+        <button id="setHeater" class="control-btn">Set Heater</button>
+      </div>
+      <div class="session-control">
+        <button id="startSession" class="control-btn">Start Session</button>
+        <button id="stopSession" class="control-btn" disabled>Stop Session</button>
+      </div>
+    </section>
+
+    <!-- HR Monitor Devices Card -->
+    <section id="devices-card" class="card">
+      <h2>HR MONITOR DEVICES</h2>
+      <button id="scanDevices" class="control-btn">Scan for Devices</button>
+      <div id="deviceList" class="device-list"></div>
+    </section>
+  </main>
+  <footer>
+    <p id="wsStatus">Connecting…</p>
+  </footer>
+  <script src="app.js"></script>
+</body>
+</html>
