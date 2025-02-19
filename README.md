@@ -1,6 +1,6 @@
-# Sauna Monitor
+# QuantifiedSteam
 
-A real-time sauna monitoring system built with Go that tracks temperature, humidity, heart rate, and session data.
+A DIY Steam Sauna tracking system that monitors temperature, humidity, heart rate, and session data in real-time.
 
 ## Features
 
