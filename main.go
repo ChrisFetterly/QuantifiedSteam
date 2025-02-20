@@ -168,148 +168,177 @@ func NewMonitor() (*Monitor, error) {
 }
 
 // startScan scans for heart rate devices for 10 seconds.
+// Devices are deduplicated based on their address to prevent repetition.
+// startScan scans for heart rate devices for 10 seconds.
 // Modified so that if a device is already connected, the device list is not cleared.
+// Devices are deduplicated based on their address to prevent repetition, and connected devices are not re-added.
 func (m *Monitor) startScan() {
-	m.mu.Lock()
-	if m.scanning {
-		m.mu.Unlock()
-		return
-	}
-	m.scanning = true
-	// Only clear the device list if no HR device is connected.
-	if !m.hrConnected {
-		m.availableDevices = nil
-		m.deviceList = nil
-	}
-	seen := make(map[string]bool)
-	m.mu.Unlock()
+    m.mu.Lock()
+    if m.scanning {
+        m.mu.Unlock()
+        return
+    }
+    m.scanning = true
+    // Only clear the device list if no HR device is connected.
+    if !m.hrConnected {
+        m.availableDevices = nil
+        m.deviceList = nil
+    }
+    seen := make(map[string]bool) // Track seen devices by address
+    m.mu.Unlock()
 
-	done := make(chan bool)
-	go func() {
-		time.Sleep(10 * time.Second)
-		m.bleAdapter.StopScan()
-		m.mu.Lock()
-		m.scanning = false
-		m.mu.Unlock()
-		done <- true
-	}()
+    done := make(chan bool)
+    go func() {
+        time.Sleep(10 * time.Second)
+        m.bleAdapter.StopScan()
+        m.mu.Lock()
+        m.scanning = false
+        m.mu.Unlock()
+        done <- true
+    }()
 
-	go func() {
-		err := m.bleAdapter.Scan(func(adapter *bluetooth.Adapter, result bluetooth.ScanResult) {
-			name := result.LocalName()
-			addr := result.Address.String()
-			if name != "" && result.HasServiceUUID(bluetooth.New16BitUUID(0x180D)) {
-				m.mu.Lock()
-				if !seen[addr] {
-					seen[addr] = true
-					id := len(m.availableDevices)
-					m.availableDevices = append(m.availableDevices, result.Address)
-					m.deviceList = append(m.deviceList, HRDevice{
-						ID:     id,
-						Name:   name,
-						Status: "available",
-					})
-					log.Printf("Found device: %s (%s)", name, addr)
-				}
-				m.mu.Unlock()
-			}
-		})
-		if err != nil {
-			log.Printf("Scan error: %v", err)
-		}
-	}()
-	<-done
+    go func() {
+        err := m.bleAdapter.Scan(func(adapter *bluetooth.Adapter, result bluetooth.ScanResult) {
+            name := result.LocalName()
+            addr := result.Address.String()
+            if name != "" && result.HasServiceUUID(bluetooth.New16BitUUID(0x180D)) {
+                m.mu.Lock()
+                defer m.mu.Unlock()
+                // Check if this device is already connected
+                isConnected := false
+                for i, deviceAddr := range m.availableDevices {
+                    if deviceAddr.String() == addr && m.deviceList[i].Status == "connected" {
+                        isConnected = true
+                        break
+                    }
+                }
+                if !seen[addr] && !isConnected { // Only add if not seen before and not already connected
+                    seen[addr] = true
+                    id := len(m.availableDevices)
+                    m.availableDevices = append(m.availableDevices, result.Address)
+                    m.deviceList = append(m.deviceList, HRDevice{
+                        ID:     id,
+                        Name:   name,
+                        Status: "available",
+                    })
+                    log.Printf("Found unique device: %s (%s)", name, addr)
+                }
+            }
+        })
+        if err != nil {
+            log.Printf("Scan error: %v", err)
+        }
+    }()
+    <-done
+    log.Printf("Scan completed. Found %d unique devices.", len(m.availableDevices))
 }
+
+
 
 // connectToDevice attempts to connect to a device (by its index).
 // We stop scanning and wait 2 seconds before connecting.
 // The connection timeout is increased to 45 seconds.
+// In connectToDevice (lines 206–236, updated)
 func (m *Monitor) connectToDevice(deviceID int) error {
-	m.mu.Lock()
-	if deviceID < len(m.deviceList) {
-		status := m.deviceList[deviceID].Status
-		if status == "connecting" || status == "connected" {
-			m.mu.Unlock()
-			return nil
-		}
-	}
-	m.deviceList[deviceID].Status = "connecting"
-	addr := m.availableDevices[deviceID]
-	m.mu.Unlock()
+    m.mu.Lock()
+    if deviceID >= len(m.deviceList) {
+        m.mu.Unlock()
+        return fmt.Errorf("invalid device ID: %d", deviceID)
+    }
+    status := m.deviceList[deviceID].Status
+    if status == "connecting" || status == "connected" {
+        m.mu.Unlock()
+        return nil
+    }
+    m.deviceList[deviceID].Status = "connecting"
+    addr := m.availableDevices[deviceID]
+    m.mu.Unlock()
 
-	// Stop scanning to ensure the adapter is free.
-	m.bleAdapter.StopScan()
-	time.Sleep(2 * time.Second) // increased delay
+    // Stop scanning to ensure the adapter is free
+    log.Printf("Stopping scan before connecting to device %s...", addr.String())
+    m.bleAdapter.StopScan()
+    time.Sleep(2 * time.Second) // Increased delay
 
-	done := make(chan error)
-	go func() {
-		device, err := m.bleAdapter.Connect(addr, bluetooth.ConnectionParams{})
-		if err != nil {
-			done <- fmt.Errorf("connection failed: %v", err)
-			return
-		}
-		m.hrDevice = device
-		err = m.connectAndSetupHR(device)
-		done <- err
-	}()
-	select {
-	case err := <-done:
-		m.mu.Lock()
-		if err != nil {
-			m.deviceList[deviceID].Status = "failed"
-			m.mu.Unlock()
-			return err
-		}
-		m.deviceList[deviceID].Status = "connected"
-		m.connectedDeviceID = &deviceID
-		m.mu.Unlock()
-		return nil
-	case <-time.After(45 * time.Second):
-		m.mu.Lock()
-		m.deviceList[deviceID].Status = "failed"
-		m.mu.Unlock()
-		return fmt.Errorf("connection timeout")
-	}
+    done := make(chan error)
+    go func() {
+        log.Printf("Attempting to connect to device %s...", addr.String())
+        // Convert 45 seconds to milliseconds (45 * 1000)
+        device, err := m.bleAdapter.Connect(addr, bluetooth.ConnectionParams{
+            Timeout: bluetooth.Duration(45000), // 45 seconds = 45,000 milliseconds
+        })
+        if err != nil {
+            log.Printf("Connection failed for device %s: %v", addr.String(), err)
+            done <- fmt.Errorf("connection failed: %v", err)
+            return
+        }
+        m.hrDevice = device
+        err = m.connectAndSetupHR(device)
+        if err != nil {
+            log.Printf("HR setup failed for device %s: %v", addr.String(), err)
+            device.Disconnect() // Clean up on failure
+        }
+        done <- err
+    }()
+    select {
+    case err := <-done:
+        m.mu.Lock()
+        if err != nil {
+            m.deviceList[deviceID].Status = "failed"
+            m.mu.Unlock()
+            return err
+        }
+        m.deviceList[deviceID].Status = "connected"
+        m.connectedDeviceID = &deviceID
+        m.mu.Unlock()
+        log.Printf("Successfully connected to device %s", addr.String())
+        return nil
+    case <-time.After(45 * time.Second):
+        m.mu.Lock()
+        m.deviceList[deviceID].Status = "failed"
+        m.mu.Unlock()
+        log.Printf("Connection timeout for device %s", addr.String())
+        return fmt.Errorf("connection timeout for device %s", addr.String())
+    }
 }
 
 // connectAndSetupHR discovers the HR service and enables notifications.
 // We try up to 5 times with 2-second delays.
 func (m *Monitor) connectAndSetupHR(device bluetooth.Device) error {
-	for i := 0; i < 5; i++ {
-		log.Printf("HR service discovery attempt %d", i+1)
-		services, err := device.DiscoverServices(nil)
-		if err != nil {
-			log.Printf("Service discovery error on attempt %d: %v", i+1, err)
-			time.Sleep(2 * time.Second)
-			continue
-		}
-		for _, service := range services {
-			if service.UUID().String() == "0000180d-0000-1000-8000-00805f9b34fb" {
-				chars, err := service.DiscoverCharacteristics(nil)
-				if err != nil {
-					log.Printf("Characteristic discovery error: %v", err)
-					continue
-				}
-				for _, char := range chars {
-					if char.UUID().String() == "00002a37-0000-1000-8000-00805f9b34fb" {
-						m.mu.Lock()
-						m.hrChar = char
-						m.hrConnected = true
-						m.mu.Unlock()
-						return char.EnableNotifications(func(buf []byte) {
-							if len(buf) >= 2 {
-								hr := int(buf[1])
-								m.mu.Lock()
-								m.currentHR = &hr
-								m.mu.Unlock()
-							}
-						})
-					}
-				}
-			}
-		}
-	}
-	return fmt.Errorf("heart rate service not found")
+    for i := 0; i < 5; i++ {
+        log.Printf("HR service discovery attempt %d for device %s", i+1, device.Address.String())
+        services, err := device.DiscoverServices([]bluetooth.UUID{bluetooth.New16BitUUID(0x180D)})
+        if err != nil {
+            log.Printf("Service discovery error on attempt %d: %v", i+1, err)
+            time.Sleep(2 * time.Second)
+            continue
+        }
+        for _, service := range services {
+            if service.UUID().String() == "0000180d-0000-1000-8000-00805f9b34fb" { // Heart Rate Service UUID
+                chars, err := service.DiscoverCharacteristics([]bluetooth.UUID{bluetooth.New16BitUUID(0x2A37)})
+                if err != nil {
+                    log.Printf("Characteristic discovery error: %v", err)
+                    continue
+                }
+                for _, char := range chars {
+                    if char.UUID().String() == "00002a37-0000-1000-8000-00805f9b34fb" { // Heart Rate Measurement UUID
+                        m.mu.Lock()
+                        m.hrChar = char
+                        m.hrConnected = true
+                        m.mu.Unlock()
+                        return char.EnableNotifications(func(buf []byte) {
+                            if len(buf) >= 2 {
+                                hr := int(buf[1]) // Assuming byte 1 contains the heart rate value
+                                m.mu.Lock()
+                                m.currentHR = &hr
+                                m.mu.Unlock()
+                            }
+                        })
+                    }
+                }
+            }
+        }
+    }
+    return fmt.Errorf("heart rate service not found on device %s", device.Address.String())
 }
 
 func (m *Monitor) getDeviceList() []HRDevice {
